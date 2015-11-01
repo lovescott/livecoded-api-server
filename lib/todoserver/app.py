@@ -51,8 +51,10 @@ def delete_task(task_id):
 @app.route("/tasks/<int:task_id>/", methods=["PUT"])
 def modify_task(task_id):
     payload = request.get_json(force=True)
-    app.store.modify_task(
+    modified = app.store.modify_task(
         task_id = task_id,
         summary = payload["summary"],
         description = payload["description"])
-    return ""
+    if modified:
+        return ""
+    return make_response("", 404)
