@@ -37,6 +37,8 @@ class TaskStore:
 
     def task_details(self, task_id):
         task = self.Session().query(Task).get(task_id)
+        if task is None:
+            return None
         return {
             "id": task.id,
             "summary": task.summary,
