@@ -15,6 +15,10 @@ class Task(Base):
     summary = Column(String)
     description = Column(String)
 
+MAX_SUMMARY_LENGTH = 119
+class BadSummaryError(Exception):
+    pass
+
 class TaskStore:
     def __init__(self, engine_spec):
         self.engine = create_engine(engine_spec)
@@ -26,6 +30,8 @@ class TaskStore:
                  for task in self.Session().query(Task).all()]
 
     def create_task(self, summary, description):
+        if len(summary) > MAX_SUMMARY_LENGTH or "\n" in summary:
+            raise BadSummaryError
         session = self.Session()
         task = Task(
             summary = summary,
