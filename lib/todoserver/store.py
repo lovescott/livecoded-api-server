@@ -19,6 +19,10 @@ MAX_SUMMARY_LENGTH = 119
 class BadSummaryError(Exception):
     pass
 
+def validate_summary(summary):
+    if len(summary) > MAX_SUMMARY_LENGTH or "\n" in summary:
+        raise BadSummaryError
+
 class TaskStore:
     def __init__(self, engine_spec):
         self.engine = create_engine(engine_spec)
@@ -30,8 +34,7 @@ class TaskStore:
                  for task in self.Session().query(Task).all()]
 
     def create_task(self, summary, description):
-        if len(summary) > MAX_SUMMARY_LENGTH or "\n" in summary:
-            raise BadSummaryError
+        validate_summary(summary)
         session = self.Session()
         task = Task(
             summary = summary,
@@ -40,6 +43,20 @@ class TaskStore:
         session.add(task)
         session.commit()
         return task.id
+
+    def modify_task(self, task_id, summary, description):
+        validate_summary(summary)
+        session = self.Session()
+        task = session.query(Task).get(task_id)
+        if task is None:
+            modified = False
+        else:
+            modified = True
+            task.summary = summary
+            task.description = description
+            session.add(task)
+            session.commit()
+        return modified
 
     def task_details(self, task_id):
         task = self.Session().query(Task).get(task_id)
@@ -62,18 +79,6 @@ class TaskStore:
             session.commit()
         return deleted
 
-    def modify_task(self, task_id, summary, description):
-        session = self.Session()
-        task = session.query(Task).get(task_id)
-        if task is None:
-            modified = False
-        else:
-            modified = True
-            task.summary = summary
-            task.description = description
-            session.add(task)
-            session.commit()
-        return modified
 
     def _delete_all_tasks(self):
         session = self.Session()
